@@ -1,5 +1,6 @@
 package com.taskflow.app.ui.component
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -7,22 +8,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.taskflow.app.R
 
 /**
- * EmptyState — orb + headline + deskripsi + CTA.
+ * EmptyState — logo + headline + deskripsi + CTA.
  * Mengikuti DESIGN.md: "No tasks yet" / "Create your first task…"
  */
 @Composable
@@ -37,25 +35,12 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Orb ilustrasi (88dp circle dengan primary color)
-        Surface(
-            modifier = Modifier.size(88.dp),
-            shape = CircleShape,
-            color = MaterialTheme.colorScheme.primaryContainer
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-        }
+        // Logo TaskFlow (88dp) — dari design/taskflow_app_icon
+        Image(
+            painter = painterResource(R.drawable.ic_taskflow_logo),
+            contentDescription = "TaskFlow logo",
+            modifier = Modifier.size(88.dp)
+        )
 
         Spacer(modifier = Modifier.height(24.dp))
 

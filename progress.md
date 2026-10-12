@@ -548,3 +548,28 @@ git push -u origin main
 - **Commit**: `release: v1.0.0 (unsigned APK + AAB)` — releases/ + progress.md terpush.
 - **Provenance**: versionName `1.0`, versionCode `1`, package `com.taskflow.app`,
   minSdk 24 (Android 7.0+), targetSdk 36.
+
+---
+
+## App Icon / Logo (dari design/taskflow_app_icon)
+
+Atas instruksi Master, logo TaskFlow (indigo squircle + checkmark putih rounded +
+dot cyan, flat design) dipakai sebagai **launcher icon** dan **logo di dalam aplikasi**.
+
+- **Vector drawable** (tajam semua resolusi):
+  - `drawable/ic_taskflow_logo.xml` — logo utuh (background + checkmark + dot), dipakai di UI
+  - `drawable/ic_launcher_background.xml` — background indigo (adaptive layer)
+  - `drawable/ic_launcher_foreground.xml` — checkmark + dot (adaptive layer, safe-zone 66dp)
+- **Adaptive launcher icon** (Android 8.0+/API 26+):
+  - `mipmap-anydpi-v26/ic_launcher.xml` + `ic_launcher_round.xml`
+    (background + foreground + monochrome untuk themed icons)
+- **PNG launcher lama dihapus** (kotak biru + lingkaran putih) — diganti adaptive vector.
+- **Logo di dalam aplikasi**:
+  - `HomeScreen` TopAppBar — logo 28dp di kiri judul "TaskFlow"
+  - `EmptyState` — logo 88dp menggantikan orb lama, di atas "No tasks yet"
+- **Warna** (dari `screen.png`): background `#4F46E5` (Electric Indigo, sesuai
+  DESIGN.md), checkmark putih `#FFFFFF`, dot cyan `#38BDF8`.
+- **Verifikasi (nyata, emulator Medium_Phone)**:
+  - `assembleDebug` + `testDebugUnitTest` (25/25) BUILD SUCCESSFUL
+  - Screenshot runtime: logo 28dp di TopAppBar (kiri judul) ✓ dan logo 88dp di
+    empty state ✓ — keduanya tampil benar (indigo + checkmark putih + dot cyan).
