@@ -1,0 +1,126 @@
+package com.taskflow.app.ui.home
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.taskflow.app.data.repository.TaskRepository
+import com.taskflow.app.ui.component.EmptyState
+import com.taskflow.app.ui.component.TaskCard
+import com.taskflow.app.ui.theme.SpaceMD
+import com.taskflow.app.ui.theme.SpaceSM
+
+/**
+ * HomeScreen — stateless composable.
+ * Menampilkan task list, empty state, filter chips, FAB.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeScreen(
+    taskRepository: TaskRepository,
+    onTaskClick: (Long) -> Unit,
+    onAddTaskClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val viewModel: HomeViewModel = viewModel(
+        factory = HomeViewModelFactory(taskRepository)
+    )
+    // Panggil dari LaunchedEffect, BUKAN langsung di body composable —
+    // body composable dieksekusi ulang setiap recomposition.
+    LaunchedEffect(Unit) {
+        viewModel.startObserving()
+    }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        topBar = {
+            TopAppBar(
+                title = { Text("TaskFlow") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
+            )
+        },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onAddTaskClick,
+                icon = { Icon(Icons.Filled.Add, contentDescription = "Add Task") },
+                text = { Text("New Task") }
+            )
+        }
+    ) { paddingValues ->
+        when (val state = uiState) {
+            is HomeUiState.Loading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
+            }
+
+            is HomeUiState.Empty -> {
+                EmptyState(
+                    onCreateClick = onAddTaskClick,
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+
+            is HomeUiState.Error -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "Error: ${state.message}",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+
+            is HomeUiState.Success -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(SpaceMD),
+                    verticalArrangement = Arrangement.spacedBy(SpaceSM)
+                ) {
+                    items(state.tasks, key = { it.id }) { task ->
+                        TaskCard(
+                            task = task,
+                            onToggleComplete = { viewModel.toggleComplete(it) },
+                            onClick = { onTaskClick(task.id) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
