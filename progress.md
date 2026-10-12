@@ -522,3 +522,22 @@ gh repo create taskflow-android --public --source=. --remote=origin --push
 git push -u origin main
 ```
 > Token/password TIDAK dikirim lewat chat — login lewat device flow di browser Master.
+
+---
+
+## Release v1.0.0 (APK + AAB)
+
+- **Artefak** (di `releases/`):
+  - `TaskFlow-v1.0.0-release-unsigned.apk` (11M) — install langsung / sideload
+  - `TaskFlow-v1.0.0-release.aab` (11M) — untuk Google Play
+  - `RELEASE_NOTES_v1.0.0.md`
+- **Signature**: UNSIGNED (keputusan Master). APK terverifikasi `apksigner` → DOES NOT VERIFY
+  (sesuai harapan; cukup untuk testing/sideload). AAB unsigned juga — perlu signing
+  dengan release keystore sebelum upload Play Store (keystore TIDAK ada di repo).
+- **Verifikasi build (nyata)**: `assembleRelease` + `bundleRelease` BUILD SUCCESSFUL;
+  sebelumnya `testDebugUnitTest` (25/25) + `assembleDebug` hijau sebelum rilis.
+- **Checksum SHA-256**: tercatat di RELEASE_NOTES + commit.
+- **GitHub Release**: tag `v1.0.0`, APK & AAB sebagai asset (lihat
+  https://github.com/zerone19/taskflow-android/releases).
+- **Provenance**: versionName `1.0`, versionCode `1`, package `com.taskflow.app`,
+  minSdk 24, targetSdk 36.
