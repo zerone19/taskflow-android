@@ -1,0 +1,26 @@
+# Gradle / build
+.gradle/
+build/
+app/build/
+captures/
+.cxx/
+
+# Local SDK path (jangan di-commit — berisi path mesin lokal)
+local.properties
+
+# IDE
+.idea/
+*.iml
+.kotlin/
+
+# Signing / keystore (jangan pernah commit)
+*.jks
+*.keystore
+keystore.properties
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
