@@ -10,6 +10,8 @@
 - **Project**: TaskFlow — Android Agent Sandbox
 - **Tujuan**: Mengevaluasi kemampuan AI agent untuk pengembangan Android native (Kotlin + Jetpack Compose + Material 3)
 - **Status Umum**: ✅ **SEMUA CHECKPOINT SELESAI (TEST 01–11).** Project Android diinisialisasi, build berhasil, 25 unit test + 21 UI test lulus. Audit menyeluruh menemukan & membetulkan 3 bug nyata (terverifikasi). **FINAL.**
+- **Repo GitHub**: https://github.com/zerone19/taskflow-android (PUBLIC, terpush & terverifikasi)
+- **Release v1.0.0**: ✅ LIVE — APK (unsigned) + AAB ter-upload sebagai release asset (lihat bagian Release di bawah)
 - **Prinsip**: Understand → Inspect → Plan → Implement → Build → Test → Verify → Report
 - **Laporan akhir**: `docs/TEST_11_FINAL_REPORT.md`
 - **TEST 10**: `docs/TEST_10_DESTRUCTIVE_DISCIPLINE.md`
@@ -525,19 +527,24 @@ git push -u origin main
 
 ---
 
-## Release v1.0.0 (APK + AAB)
+## Release v1.0.0 (APK + AAB) ✅ LIVE
 
-- **Artefak** (di `releases/`):
-  - `TaskFlow-v1.0.0-release-unsigned.apk` (11M) — install langsung / sideload
-  - `TaskFlow-v1.0.0-release.aab` (11M) — untuk Google Play
-  - `RELEASE_NOTES_v1.0.0.md`
+- **Release URL**: https://github.com/zerone19/taskflow-android/releases/tag/v1.0.0
+  (tag `v1.0.0`, bukan draft, bukan prerelease — terverifikasi via `gh release view`)
+- **Artefak** (di `releases/` + ter-upload sebagai release asset):
+  - `TaskFlow-v1.0.0-release-unsigned.apk` — 11,042,876 bytes (10.5 MB) — install/sideload
+  - `TaskFlow-v1.0.0-release.aab` — 10,711,973 bytes (10.2 MB) — untuk Google Play
+  - `RELEASE_NOTES_v1.0.0.md` (release notes: cara install, checksum, catatan signing)
 - **Signature**: UNSIGNED (keputusan Master). APK terverifikasi `apksigner` → DOES NOT VERIFY
   (sesuai harapan; cukup untuk testing/sideload). AAB unsigned juga — perlu signing
   dengan release keystore sebelum upload Play Store (keystore TIDAK ada di repo).
-- **Verifikasi build (nyata)**: `assembleRelease` + `bundleRelease` BUILD SUCCESSFUL;
-  sebelumnya `testDebugUnitTest` (25/25) + `assembleDebug` hijau sebelum rilis.
-- **Checksum SHA-256**: tercatat di RELEASE_NOTES + commit.
-- **GitHub Release**: tag `v1.0.0`, APK & AAB sebagai asset (lihat
-  https://github.com/zerone19/taskflow-android/releases).
+- **Verifikasi build (nyata)**: SEBELUM rilis dijalankan `testDebugUnitTest` (25/25) +
+  `assembleDebug` hijau, lalu `assembleRelease` + `bundleRelease` BUILD SUCCESSFUL.
+- **Verifikasi release (nyata, bukan klaim)**: `gh release view v1.0.0` mengonfirmasi
+  tag, 2 asset dengan ukuran persis di atas, downloadCount baseline 0.
+- **Checksum SHA-256**:
+  - APK `7ae0543652c0428d226188308797d2af0b952b7507163430d352908a41730a96`
+  - AAB `7eb52760a3aebcfac39422a50fc7ae13dfc69fd447906efc121ff180633b8cb7`
+- **Commit**: `release: v1.0.0 (unsigned APK + AAB)` — releases/ + progress.md terpush.
 - **Provenance**: versionName `1.0`, versionCode `1`, package `com.taskflow.app`,
-  minSdk 24, targetSdk 36.
+  minSdk 24 (Android 7.0+), targetSdk 36.
