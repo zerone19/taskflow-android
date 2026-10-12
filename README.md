@@ -1,7 +1,17 @@
 # TaskFlow — Android Agent Sandbox
 
-TaskFlow adalah aplikasi Android native (task manager sederhana) yang sekaligus
-dipakai sebagai **sandbox evaluasi kemampuan AI agent** dalam pengembangan Android.
+<p align="center">
+  <img src="logo.png" alt="TaskFlow Logo" width="120" />
+</p>
+
+<p align="center">
+  Aplikasi Android native (task manager sederhana) yang sekaligus dipakai sebagai
+  <strong>sandbox evaluasi kemampuan AI agent</strong> dalam pengembangan Android.
+</p>
+
+<p align="center">
+  Kotlin + Jetpack Compose + Material 3 · MVVM · Room · offline-first
+</p>
 
 Dibangun dengan **Kotlin + Jetpack Compose + Material 3**, arsitektur berlapis
 (UI → ViewModel → Repository → Room), dan 100% offline (persistensi lokal).
