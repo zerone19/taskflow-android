@@ -1,0 +1,6 @@
+<resources>
+    <!-- Warna window background harus sinkron dengan background Compose
+         (WarmSlateBackground #FAF8FF di ui/theme/Color.kt) supaya tidak
+         ada flash warna berbeda saat app start sebelum Compose menggambar. -->
+    <color name="taskflow_window_background">#FAF8FF</color>
+</resources>

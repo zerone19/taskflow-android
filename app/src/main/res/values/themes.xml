@@ -1,0 +1,13 @@
+<resources>
+    <!--
+      App 100% Jetpack Compose — warna/tipografi/shape aktual di-set oleh
+      TaskFlowTheme (Compose, lihat ui/theme/). Tema XML ini hanya dasar window:
+      parent framework android:Theme.Material.*NoActionBar (tersedia tanpa
+      dependency tambahan; project tidak memakai library material XML/AppCompat).
+      windowBackground di-set ke warna background light supaya tidak flash putih
+      sebelum Compose pertama kali menggambar.
+    -->
+    <style name="Theme.TaskFlow" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/taskflow_window_background</item>
+    </style>
+</resources>
