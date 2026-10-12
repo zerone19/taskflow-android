@@ -549,6 +549,26 @@ git push -u origin main
 - **Provenance**: versionName `1.0`, versionCode `1`, package `com.taskflow.app`,
   minSdk 24 (Android 7.0+), targetSdk 36.
 
+### Release v1.0.1 — Logo Update (APK + AAB) ✅ LIVE
+
+Rilis lanjutan karena ada perubahan kode/aset setelah v1.0.0 (adaptive launcher icon,
+logo di dalam aplikasi, squircle corners, README logo). APK v1.0.0 jadi usang (belum
+ada logo), jadi dibuat **v1.0.1** dengan versionName `1.0.1`, versionCode `2`.
+
+- **Release URL**: https://github.com/zerone19/taskflow-android/releases/tag/v1.0.1
+- **Artefak** (`releases/` + release asset):
+  - `TaskFlow-v1.0.1-release-unsigned.apk` (11M) — install/sideload
+  - `TaskFlow-v1.0.1-release.aab` (11M) — Google Play
+  - `RELEASE_NOTES_v1.0.1.md`
+- **Signature**: UNSIGNED (`apksigner` → DOES NOT VERIFY, sesuai harapan).
+- **Verifikasi build (nyata)**: `testDebugUnitTest` (25/25) + `assembleDebug` hijau,
+  lalu `assembleRelease` + `bundleRelease` SUCCESSFUL; APK rebuild setelah versionName
+  dinaikkan ke 1.0.1 (checksum final di bawah). Package `com.taskflow.app`.
+- **Checksum SHA-256**:
+  - APK `45890a072373aabec223201dd231e85f13c5d687efd0c4f056956d9f1cfa666c`
+  - AAB `24b4c1e3a39765fb697602833e8693a926e475ffd75deab01c4e599b9482c8eb`
+- **v1.0.0 tetap ada** sebagai riwayat (tidak dihapus) — release history di GitHub.
+
 ---
 
 ## App Icon / Logo (dari design/taskflow_app_icon)
