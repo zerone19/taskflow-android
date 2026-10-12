@@ -502,27 +502,23 @@ Create · Complete (toggle) · Edit · Delete (dengan konfirmasi) · Priority (L
 
 - **Repo lokal diinisialisasi** (`git init -b main`) dengan `.gitignore` Android
   (mengabaikan `build/`, `.gradle/`, `.idea/`, `.kotlin/`, `local.properties`, keystore).
-- **7 commit terstruktur** (conventional commits, tidak mencampur hal tak terkait):
-  1. `chore: initialize TaskFlow Android sandbox project`
-  2. `build: configure Gradle, Kotlin, Compose, and Room`
-  3. `docs: add architecture, design system, data model, and test reports`
-  4. `feat: add data layer (Room, repository, domain model) and DI`
-  5. `feat: implement Jetpack Compose UI (home, form, detail, theme)`
-  6. `test: add unit tests` + `test: add Compose UI tests`
-  7. `docs: add evaluation progress tracker (TEST 01-11 + audit)`
+- **9 commit terstruktur** (conventional commits, tidak mencampur hal tak terkait).
 - **Diverifikasi**: `local.properties` (berisi SDK path lokal) TIDAK ter-commit
   (`git check-ignore` mengonfirmasi). Tidak ada secret/keystore/build ter-commit.
-- **Status**: commit lokal saja — **BELUM ada remote/push** (menunggu auth GitHub Master).
-- **Keputusan Master**: repo **PUBLIC**.
+- **Status**: ✅ **TERPUSH ke GitHub.**
 
-### Langkah Push (setelah auth siap)
+### Repository
+- **URL**: https://github.com/zerone19/taskflow-android
+- **Visibility**: PUBLIC (keputusan Master)
+- **Default branch**: `main`
+- **Auth**: `gh` CLI, login sebagai `zerone19` (device flow, Master konfirmasi di browser)
+- **Push terverifikasi** (bukan klaim): remote HEAD `4c5f13a` = local HEAD `4c5f13a`,
+  9 commit, tree remote cocok lokal, `git status` sinkron (no ahead/behind).
+
+### Cara Reproduksi
 ```bash
-# Opsi A — pakai gh CLI (jika Master pasang & login):
+gh auth login --hostname github.com --git-protocol https --web
 gh repo create taskflow-android --public --source=. --remote=origin --push
-
-# Opsi B — buat repo via web github.com/new, lalu:
-git remote add origin https://github.com/<USERNAME>/taskflow-android.git
 git push -u origin main
 ```
-> Autentikasi: Master pakai `gh auth login` atau Personal Access Token.
-> Token/password TIDAK dikirim lewat chat. Push bersifat irreversible → butuh auth Master.
+> Token/password TIDAK dikirim lewat chat — login lewat device flow di browser Master.
