@@ -573,3 +573,8 @@ dot cyan, flat design) dipakai sebagai **launcher icon** dan **logo di dalam apl
   - `assembleDebug` + `testDebugUnitTest` (25/25) BUILD SUCCESSFUL
   - Screenshot runtime: logo 28dp di TopAppBar (kiri judul) ✓ dan logo 88dp di
     empty state ✓ — keduanya tampil benar (indigo + checkmark putih + dot cyan).
+- **Perbaikan squircle (follow-up)**: versi awal logo di aplikasi punya sudut tajam
+  90°. Atas permintaan Master, background `ic_taskflow_logo.xml` diganti clip path
+  rounded-square (radius ~22% = 24/108 unit) → sudut keempat sisi tumpul, cocok
+  `design/taskflow_app_icon/screen.png`. Launcher icon adaptive sudah squircle
+  otomatis (mask oleh sistem). Commit `fix: round in-app logo corners to squircle`.

@@ -1,6 +1,89 @@
 # TaskFlow — Android Agent Sandbox
 
-TaskFlow adalah proyek Android kecil yang digunakan sebagai sandbox untuk menguji kemampuan AI agent dalam pengembangan Android native.
+TaskFlow adalah aplikasi Android native (task manager sederhana) yang sekaligus
+dipakai sebagai **sandbox evaluasi kemampuan AI agent** dalam pengembangan Android.
+
+Dibangun dengan **Kotlin + Jetpack Compose + Material 3**, arsitektur berlapis
+(UI → ViewModel → Repository → Room), dan 100% offline (persistensi lokal).
+
+---
+
+## Fitur
+
+- Create / Edit / Delete task (delete dengan dialog konfirmasi)
+- Tandai task selesai (toggle complete)
+- Prioritas: Low / Medium / High (dengan priority chip bertema)
+- Empty state dengan logo
+- Tema Light & Dark (mengikuti sistem)
+- Persistensi lokal (Room)
+- Launcher icon adaptive (vector) + logo di dalam aplikasi
+
+## Tech Stack
+
+| Area | Teknologi |
+|------|-----------|
+| Bahasa | Kotlin 2.1.20 |
+| UI | Jetpack Compose + Material 3 |
+| Arsitektur | MVVM (UI → ViewModel → Repository → Room) |
+| State | StateFlow + sealed UiState |
+| Navigasi | Navigation Compose |
+| Persistensi | Room (KSP) |
+| DI | Manual (AppContainer) |
+| Build | Gradle 8.11.1 + AGP 8.9.1, Version Catalog |
+| Min SDK | 24 (Android 7.0+) · Target/Compile SDK 36 |
+
+## Struktur Project
+
+```
+app/src/main/java/com/taskflow/app/
+├── MainActivity.kt
+├── di/AppContainer.kt              # Manual DI
+├── data/
+│   ├── model/Task.kt               # Domain model + Priority enum
+│   ├── local/                      # Room: TaskDao, TaskDatabase, TaskEntity + mappers
+│   └── repository/                 # TaskRepository + DefaultTaskRepository
+└── ui/
+    ├── theme/                      # Color, Type, Shape, Spacing (design tokens)
+    ├── navigation/                 # Routes + NavHost
+    ├── component/                  # TaskCard, PriorityChip, EmptyState
+    ├── home/                       # HomeScreen + HomeViewModel
+    ├── detail/                     # TaskDetailScreen + ViewModel
+    └── form/                       # TaskFormScreen + ViewModel (add/edit)
+```
+
+## Build & Test
+
+```bash
+# Unit test (25 test)
+./gradlew testDebugUnitTest
+
+# UI test (21 test, butuh emulator/device)
+./gradlew connectedDebugAndroidTest
+
+# Build APK debug
+./gradlew assembleDebug
+
+# Build release APK + AAB (unsigned)
+./gradlew assembleRelease bundleRelease
+```
+
+## Install APK Release
+
+Unduh dari [Releases](https://github.com/zerone19/taskflow-android/releases/tag/v1.0.0):
+`TaskFlow-v1.0.0-release-unsigned.apk`
+
+1. Transfer APK ke HP Android
+2. Aktifkan "Install unknown apps" untuk browser/file manager
+3. Buka APK → install
+
+> Catatan: APK release bersifat **unsigned** — cukup untuk testing/sideload.
+> Untuk Google Play perlu signing dengan release keystore (tidak ada di repo).
+
+## Verifikasi
+
+- Unit test: **25/25 lulus**
+- UI test: **21/21 lulus** (emulator, Android 17)
+- Semua klaim verifikasi di `progress.md` berbasis eksekusi nyata, bukan asumsi.
 
 ## Tujuan
 
@@ -23,4 +106,12 @@ Agent tidak boleh mengarang requirement, endpoint, desain, atau hasil verifikasi
 
 ## Status
 
-Sandbox / Agent Evaluation Project
+Sandbox / Agent Evaluation Project — semua checkpoint TEST 01–11 selesai,
+aplikasi rilis **v1.0.0**.
+
+## Dokumentasi & Riwayat
+
+- [`progress.md`](progress.md) — tracker lengkap TEST 01–11, audit, & release
+- [`docs/`](docs/) — requirement, architecture, design system, laporan evaluasi
+- [`design/`](design/) — referensi desain (DESIGN.md + HTML + app icon)
+- [Releases](https://github.com/zerone19/taskflow-android/releases) — APK & AAB v1.0.0
