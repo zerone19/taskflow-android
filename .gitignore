@@ -24,3 +24,4 @@ Thumbs.db
 
 # Logs
 *.log
+gradle/gradle-daemon-jvm.properties
