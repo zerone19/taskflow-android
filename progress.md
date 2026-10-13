@@ -620,6 +620,135 @@ Create · Complete (toggle) · Edit · Delete (dengan konfirmasi) · Priority (L
 
 ---
 
+## CATATAN IDE — Fitur Bottom Nav Lanjutan (atas permintaan Master, 2026-10-13)
+
+> Status: **IDE TERCATAT — BELUM DIIMPLEMENTASI.** Bottom nav skeleton (4 tab) sudah
+> ada (commit `98e6bf5`). Spesifikasi di bawah adalah isi fungsional per tab.
+> Belum ada perubahan kode sampai Master menyetujui eksekusi. Setiap tab wajib
+> build + test sebelum dinyatakan selesai.
+
+### 1. TASK Timer / Reminder Notifikasi
+
+**Ide**: Setiap kali membuat task, pengguna dapat mengatur **waktu pengingat**
+(reminder). Jika sudah menyentuh waktu yang ditentukan → TaskFlow mengirim
+**notifikasi** mengingatkan jadwal task tersebut.
+
+**Grounding**:
+- Field `dueDate: Long?` **sudah ada** di `Task` model + entity (Tier 1 #2).
+- Notifikasi Android = `NotificationManager` + channel (standar platform).
+- WorkManager **sudah ada** di dependencies (dipakai ExpiredTaskWorker) —
+  bisa dipakai untuk schedule notification di waktu tertentu.
+- Permission `POST_NOTIFICATIONS` (Android 13+/API 33+) perlu ditambahkan
+  runtime request.
+
+**Konsekuensi teknis (kalau dikerjakan)**:
+- **Notifikasi**: butuh `NotificationChannel` (Android 8+) + runtime permission
+  request `POST_NOTIFICATIONS` untuk API 33+. Tambah ke `AndroidManifest.xml`.
+- **Scheduler**: WorkManager `OneTimeWorkRequest` dengan `setInitialDelay`
+  sampai waktu reminder, ATAU `AlarmManager` untuk presisi lebih tinggi
+  (WorkManager bisa delay di Doze mode — perlu keputusan Master kalau presisi
+  menit penting).
+- **UI**: time picker di `TaskFormScreen` (selain due date) — set jam + menit
+  reminder. Bisa pakai `TimePicker` M3.
+- **Cancel**: jika task diedit/dihapus sebelum reminder, work yang terjadwal
+  harus di-cancel (`WorkManager.cancelUniqueWork` pakai task ID sebagai nama).
+- **Keputusan Master yang dibutuhkan**: apakah reminder wajib (setiap task) atau
+  opsional? Presisi waktu penting (AlarmManager) atau tidak (WorkManager cukup)?
+- **Test**: WorkManager test (`WorkManagerTestInit`), notification channel test,
+  regression 38 unit test.
+
+### 2. DATE Event (TaskFlow Calendar)
+
+**Ide**: TaskFlow menandai sebuah **event** pada tanggal yang ditentukan, dan
+**tersinkronisasi dengan fitur task** yang sudah ada.
+
+**Grounding**:
+- Field `dueDate: Long?` **sudah ada** — event bisa tampil berdasarkan dueDate.
+- Bottom nav tab **DATE** sudah ada (placeholder, commit `98e6bf5`).
+- Tidak ada kalender UI saat ini — butuh implementasi baru.
+
+**Konsekuensi teknis (kalau dikerjakan)**:
+- **Sinkronisasi**: event = task yang punya dueDate? Atau entity `Event`
+  terpisah yang di-link ke Task? Perlu keputusan Master (ubah maksud fitur).
+  - Opsi A: DATE tab = task list di-group by dueDate (tanpa entity baru).
+  - Opsi B: entity `Event` baru + relasi ke Task (butuh DB migration v5→v6).
+- **UI kalender**: butuh komponen kalender (month grid + day cells) — belum ada
+  di project. Bisa pakai library kalender ATAU build custom grid dengan Compose
+  (perlu keputusan Master: dependency baru atau custom).
+- **Keputusan Master yang dibutuhkan**: event terpisah dari task atau sama?
+  Kalender pakai library atau custom Compose?
+- **Test**: query task-by-date, calendar navigation, regression test.
+
+### 3. AI Chat To Task (Gemini API)
+
+**Ide**: TaskFlow punya **AI chat asisten** yang membantu pengguna mengelola task.
+Pengguna chat dengan AI → AI bisa bantu buat/edit/cari task. **API Key: Gemini**.
+
+**Grounding**:
+- Bottom nav tab **AI CHAT** sudah ada (placeholder, commit `98e6bf5`).
+- **Tidak ada** networking di project saat ini (Retrofit/OkHttp belum ada —
+  semua data lokal Room). Ini = dependency + arsitektur BARU.
+- Gemini API = REST API (Google AI). Bisa pakai Retrofit + OkHttp +
+  kotlinx.serialization (semua belum ada di project).
+
+**Konsekuensi teknis (kalau dikerjakan)**:
+- **Networking**: tambah Retrofit + OkHttp + kotlinx.serialization (dependency
+  baru). API contract Gemini: `generativelanguage.googleapis.com` — perlu
+  dokumentasi endpoint + request/response model.
+- **API Key Gemini**: **KREDENSIAL — jangan hardcode di repo, jangan commit.**
+  Simpan di `local.properties` (gitignored) → inject ke `BuildConfig` via Gradle.
+  Atau user input key sendiri di Settings (lebih aman, key tidak masuk repo).
+  Perlu keputusan Master: key di-build-time (BuildConfig) atau runtime (Settings)?
+- **AI → Task actions**: AI bisa aksikan repository (create/edit/delete task)?
+  Butuh function calling / tool use Gemini API + parsing response → action.
+  Scope bisa besar — perlu keputusan Master: AI hanya chat saran, atau AI bisa
+  eksekusi CRUD task langsung?
+- **Chat UI**: message list + input field — belum ada. State management chat
+  history (in-memory atau persist ke Room — perlu keputusan).
+- **Test**: API mock (Turbine/MockWebServer), chat ViewModel test, key handling
+  test (jangan pernah log key).
+- **Keputusan Master yang dibutuhkan**: key di BuildConfig atau Settings?
+  AI bisa eksekusi CRUD atau hanya saran? Chat history persist atau tidak?
+
+### 4. Setting
+
+**Ide**: Tab **SETTING** berisi: **Dark Mode**, **Notification Custom**,
+**About Me**, **Contact Developer**.
+
+**Grounding**:
+- Dark mode toggle **sudah ada** (Tier 3 #8 — `ThemePreferences` + DataStore).
+  Tab Setting bisa jadi rumah toggle ini (atau tetap di TopAppBar — keputusan).
+- Bottom nav tab **SETTING** sudah ada (placeholder, commit `98e6bf5`).
+- Notification Custom: terkait TASK Timer (#1) — butuh channel + custom sound/
+  vibration setting. `NotificationPreferences` (DataStore) belum ada.
+- About Me / Contact Developer: konten statis (nama app, versi, link developer).
+
+**Konsekuensi teknis (kalau dikerjakan)**:
+- **Dark Mode**: pindahkan toggle dari TopAppBar ke Setting screen, atau
+  duplicate. `ThemePreferences.isDarkMode` sudah ada.
+- **Notification Custom**: butuh `NotificationPreferences` (DataStore baru) +
+  UI toggle sound/vibration. Terkait fitur #1 (Timer) — perlu channel setup.
+- **About Me**: teks statis (nama app, versi, deskripsi) — `BuildConfig.VERSION_NAME`.
+- **Contact Developer**: link (email/GitHub/Telegram) — `Intent.ACTION_VIEW`
+  atau `ACTION_SENDTO` (email). Konten dari Master.
+- **Keputusan Master yang dibutuhkan**: kontak developer apa (email/GitHub/
+  Telegram)? Info About Me apa yang ditampilkan?
+- **Test**: DataStore prefs test, intent test, regression test.
+
+**Rekomendasi Arona (urutan pengerjaan jika disetujui)**:
+1. **Setting** (paling mudah — dark mode sudah ada, About/Contact statis) —
+   warm-up, cepat terverifikasi.
+2. **TASK Timer/Reminder** (WorkManager sudah ada, notifikasi standar) —
+   nilai tinggi, effort sedang.
+3. **DATE Event** (tergantung keputusan entity vs dueDate-only) —
+   effort sedang, butuh kalender UI.
+4. **AI Chat** (paling besar — networking + API key + function calling) —
+   kerjakan terakhir, butuh keputusan scope paling banyak.
+
+> Bagian ini mencatat USULAN. Belum ada perubahan kode sampai Master memilih.
+
+---
+
 ## Git & Upload ke GitHub
 
 - **Repo lokal diinisialisasi** (`git init -b main`) dengan `.gitignore` Android
