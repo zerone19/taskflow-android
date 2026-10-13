@@ -31,6 +31,12 @@ class FakeTaskDao : TaskDao {
         return tasks.value.find { it.id == id }
     }
 
+    override suspend fun deleteExpiredTasks(now: Long) {
+        tasks.value = tasks.value.filter {
+            !(it.expiresAt != null && it.expiresAt < now && !it.completed)
+        }
+    }
+
     override suspend fun insertTask(task: TaskEntity): Long {
         val id = nextId++
         val entity = task.copy(id = id)

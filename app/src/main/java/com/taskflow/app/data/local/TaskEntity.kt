@@ -20,7 +20,8 @@ data class TaskEntity(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val dueDate: Long? = null,  // epoch millis; null = tidak ada deadline
-    val tags: String = ""       // comma-separated; "" = tidak ada tag
+    val tags: String = "",       // comma-separated; "" = tidak ada tag
+    val expiresAt: Long? = null  // epoch millis; null = tidak ada expiry
 )
 
 // === Mappers ===
@@ -34,7 +35,8 @@ fun TaskEntity.toDomain(): Task = Task(
     createdAt = createdAt,
     updatedAt = updatedAt,
     dueDate = dueDate,
-    tags = if (tags.isBlank()) emptyList() else tags.split(",")
+    tags = if (tags.isBlank()) emptyList() else tags.split(","),
+    expiresAt = expiresAt
 )
 
 fun Task.toEntity(): TaskEntity = TaskEntity(
@@ -46,5 +48,6 @@ fun Task.toEntity(): TaskEntity = TaskEntity(
     createdAt = createdAt,
     updatedAt = updatedAt,
     dueDate = dueDate,
-    tags = tags.joinToString(",")
+    tags = tags.joinToString(","),
+    expiresAt = expiresAt
 )

@@ -273,4 +273,39 @@ class HomeViewModelTest {
         // No tasks → Empty state, momentum not available
         assertTrue(viewModel.uiState.value is HomeUiState.Empty)
     }
+
+    @Test
+    fun `deleteExpiredTasks removes expired non-completed tasks`() = runTest(testDispatcher) {
+        val now = System.currentTimeMillis()
+        repository.insertTask(Task(title = "Expired task", expiresAt = now - 1000))
+        repository.insertTask(Task(title = "Future task", expiresAt = now + 86400000))
+        repository.insertTask(Task(title = "No expiry"))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(3, (viewModel.uiState.value as HomeUiState.Success).tasks.size)
+
+        repository.deleteExpiredTasks(now)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(2, state.tasks.size)
+        assertTrue(state.tasks.none { it.title == "Expired task" })
+    }
+
+    @Test
+    fun `deleteExpiredTasks does not remove completed tasks`() = runTest(testDispatcher) {
+        val now = System.currentTimeMillis()
+        repository.insertTask(Task(title = "Expired completed", completed = true, expiresAt = now - 1000))
+        repository.insertTask(Task(title = "Expired pending", expiresAt = now - 1000))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        repository.deleteExpiredTasks(now)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(1, state.tasks.size)
+        assertEquals("Expired completed", state.tasks[0].title)
+    }
 }

@@ -27,6 +27,8 @@ class CountingTaskDao(
 
     override fun searchTasks(query: String): Flow<List<TaskEntity>> = delegate.searchTasks(query)
 
+    override suspend fun deleteExpiredTasks(now: Long) = delegate.deleteExpiredTasks(now)
+
     override suspend fun getTaskById(id: Long): TaskEntity? = delegate.getTaskById(id)
 
     override suspend fun insertTask(task: TaskEntity): Long = delegate.insertTask(task)

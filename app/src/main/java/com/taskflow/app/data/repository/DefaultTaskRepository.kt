@@ -42,4 +42,8 @@ class DefaultTaskRepository(
     override suspend fun deleteTask(task: Task) {
         taskDao.deleteTask(task.toEntity())
     }
+
+    override suspend fun deleteExpiredTasks(now: Long) {
+        taskDao.deleteExpiredTasks(now)
+    }
 }

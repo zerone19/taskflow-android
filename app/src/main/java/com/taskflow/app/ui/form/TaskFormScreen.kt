@@ -191,6 +191,28 @@ fun TaskFormScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(SpaceMD))
+
+            Text(
+                text = "Auto-Delete (permanen, tanpa undo)",
+                style = MaterialTheme.typography.labelLarge
+            )
+
+            Spacer(modifier = Modifier.height(SpaceSM))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(SpaceSM)
+            ) {
+                listOf<Int?>(null, 1, 7, 30).forEach { days ->
+                    FilterChip(
+                        selected = formState.expiryDays == days,
+                        onClick = { viewModel.onExpiryChange(days) },
+                        label = { Text(if (days == null) "No" else "$days hari") }
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(SpaceLG))
 
             formState.saveError?.let { error ->

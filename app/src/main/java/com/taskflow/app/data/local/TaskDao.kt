@@ -16,6 +16,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%' ORDER BY createdAt DESC")
     fun searchTasks(query: String): Flow<List<TaskEntity>>
 
+    @Query("DELETE FROM tasks WHERE expiresAt IS NOT NULL AND expiresAt < :now AND completed = 0")
+    suspend fun deleteExpiredTasks(now: Long)
+
     @Query("SELECT * FROM tasks WHERE id = :id")
     suspend fun getTaskById(id: Long): TaskEntity?
 

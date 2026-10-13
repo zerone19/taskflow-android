@@ -1,31 +1,94 @@
 package com.taskflow.app.ui.navigation
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Checklist
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SmartToy
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.taskflow.app.data.model.Task
+import com.taskflow.app.data.repository.SubtaskRepository
 import com.taskflow.app.data.repository.TaskRepository
+import com.taskflow.app.ui.component.PlaceholderScreen
 import com.taskflow.app.ui.detail.TaskDetailScreen
 import com.taskflow.app.ui.form.TaskFormScreen
 import com.taskflow.app.ui.home.HomeScreen
 
+private data class BottomTab(
+    val route: String,
+    val label: String,
+    val icon: ImageVector
+)
+
+private val bottomTabs = listOf(
+    BottomTab(Routes.HOME, "TASK", Icons.Filled.Checklist),
+    BottomTab(Routes.DATE, "DATE", Icons.Filled.CalendarMonth),
+    BottomTab(Routes.AI_CHAT, "AI CHAT", Icons.Filled.SmartToy),
+    BottomTab(Routes.SETTINGS, "SETTING", Icons.Filled.Settings)
+)
+
 @Composable
 fun TaskFlowNavHost(
     taskRepository: TaskRepository,
-    subtaskRepository: com.taskflow.app.data.repository.SubtaskRepository,
+    subtaskRepository: SubtaskRepository,
     isDarkMode: Boolean = false,
     onToggleTheme: (Boolean) -> Unit = {}
 ) {
     val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
-    NavHost(navController = navController, startDestination = Routes.HOME) {
+    // Bottom nav hanya tampil di top-level destinations (tab), bukan detail/form.
+    val showBottomBar = currentRoute in bottomTabs.map { it.route }
 
-        composable(Routes.HOME) { backStackEntry ->
+    Scaffold(
+        bottomBar = {
+            if (showBottomBar) {
+                NavigationBar {
+                    bottomTabs.forEach { tab ->
+                        NavigationBarItem(
+                            selected = currentRoute == tab.route,
+                            onClick = {
+                                if (currentRoute != tab.route) {
+                                    navController.navigate(tab.route) {
+                                        // M3 pattern: single top + pop to start + save/restore state
+                                        popUpTo(Routes.HOME) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            },
+                            icon = { Icon(tab.icon, contentDescription = tab.label) },
+                            label = { Text(tab.label) }
+                        )
+                    }
+                }
+            }
+        }
+    ) { paddingValues ->
+        NavHost(
+            navController = navController,
+            startDestination = Routes.HOME,
+            modifier = Modifier.padding(paddingValues)
+        ) {
+
+            composable(Routes.HOME) { backStackEntry ->
             // Baca deleted_task dari savedStateHandle untuk Undo Snackbar.
             val deletedTask by backStackEntry.savedStateHandle
                 .getStateFlow<Task?>("deleted_task", null)
@@ -90,6 +153,19 @@ fun TaskFlowNavHost(
                     navController.popBackStack()
                 }
             )
+        }
+
+        composable(Routes.DATE) {
+            PlaceholderScreen(title = "Date")
+        }
+
+        composable(Routes.AI_CHAT) {
+            PlaceholderScreen(title = "AI Chat")
+        }
+
+        composable(Routes.SETTINGS) {
+            PlaceholderScreen(title = "Settings")
+        }
         }
     }
 }

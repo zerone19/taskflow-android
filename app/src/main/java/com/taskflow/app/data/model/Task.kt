@@ -24,5 +24,6 @@ data class Task(
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
     val dueDate: Long? = null,       // epoch millis; null = tidak ada deadline
-    val tags: List<String> = emptyList()  // disimpan sebagai comma-separated String di DB
+    val tags: List<String> = emptyList(),  // disimpan sebagai comma-separated String di DB
+    val expiresAt: Long? = null      // epoch millis; null = tidak ada expiry
 )

@@ -17,6 +17,7 @@ data class TaskFormState(
     val priority: Priority = Priority.MEDIUM,
     val dueDate: Long? = null,
     val tags: List<String> = emptyList(),
+    val expiryDays: Int? = null,  // null = no expiry, 1/7/30 days
     val titleError: String? = null,
     val saveError: String? = null,
     val isSaving: Boolean = false
@@ -46,7 +47,11 @@ class TaskFormViewModel(
                     description = task.description,
                     priority = task.priority,
                     dueDate = task.dueDate,
-                    tags = task.tags
+                    tags = task.tags,
+                    expiryDays = task.expiresAt?.let { expiresAt ->
+                        val days = ((expiresAt - task.createdAt) / (24 * 60 * 60 * 1000)).toInt()
+                        if (days in listOf(1, 7, 30)) days else null
+                    }
                 )
             }
         }
@@ -74,6 +79,10 @@ class TaskFormViewModel(
         _formState.value = _formState.value.copy(tags = updated)
     }
 
+    fun onExpiryChange(days: Int?) {
+        _formState.value = _formState.value.copy(expiryDays = days)
+    }
+
     fun save(onSuccess: () -> Unit) {
         val state = _formState.value
 
@@ -99,6 +108,7 @@ class TaskFormViewModel(
                                 priority = state.priority,
                                 dueDate = state.dueDate,
                                 tags = state.tags,
+                                expiresAt = state.expiryDays?.let { now + it * 24L * 60 * 60 * 1000 },
                                 updatedAt = now
                             )
                         )
@@ -112,6 +122,7 @@ class TaskFormViewModel(
                             priority = state.priority,
                             dueDate = state.dueDate,
                             tags = state.tags,
+                            expiresAt = state.expiryDays?.let { now + it * 24L * 60 * 60 * 1000 },
                             createdAt = now,
                             updatedAt = now
                         )

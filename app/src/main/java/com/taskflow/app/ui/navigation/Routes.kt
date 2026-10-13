@@ -8,6 +8,9 @@ object Routes {
     const val HOME = "home"
     const val TASK_DETAIL = "task_detail/{taskId}"
     const val TASK_FORM = "task_form?taskId={taskId}"
+    const val DATE = "date"
+    const val AI_CHAT = "ai_chat"
+    const val SETTINGS = "settings"
 
     fun taskDetail(taskId: Long): String = "task_detail/$taskId"
     fun taskForm(taskId: Long? = null): String =

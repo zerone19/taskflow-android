@@ -10,11 +10,16 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.taskflow.app.data.local.ThemePreferences
 import com.taskflow.app.di.DefaultAppContainer
 import com.taskflow.app.ui.navigation.TaskFlowNavHost
 import com.taskflow.app.ui.theme.TaskFlowTheme
+import com.taskflow.app.worker.ExpiredTaskWorker
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
 
@@ -25,6 +30,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         appContainer = DefaultAppContainer(applicationContext)
         themePreferences = ThemePreferences(applicationContext)
+
+        // Schedule periodic expired task cleanup (setiap 1 jam).
+        val workRequest = PeriodicWorkRequestBuilder<ExpiredTaskWorker>(1, TimeUnit.HOURS).build()
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            ExpiredTaskWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            workRequest
+        )
 
         setContent {
             val isDarkModePref by themePreferences.isDarkMode.collectAsState(initial = null)
