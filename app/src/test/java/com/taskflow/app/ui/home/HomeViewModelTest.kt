@@ -109,4 +109,80 @@ class HomeViewModelTest {
         val updated = repository.getTaskById(id)!!
         assertTrue(updated.completed)
     }
+
+    @Test
+    fun `search filters by title`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "Buy groceries", priority = Priority.HIGH))
+        repository.insertTask(Task(title = "Call mom", priority = Priority.LOW))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setSearchQuery("groceries")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(1, state.tasks.size)
+        assertEquals("Buy groceries", state.tasks[0].title)
+    }
+
+    @Test
+    fun `search filters by description`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "Task A", description = "water the plants"))
+        repository.insertTask(Task(title = "Task B", description = "send email"))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setSearchQuery("plants")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(1, state.tasks.size)
+        assertEquals("Task A", state.tasks[0].title)
+    }
+
+    @Test
+    fun `search is case insensitive`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "Important Meeting"))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setSearchQuery("IMPORTANT")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(1, state.tasks.size)
+    }
+
+    @Test
+    fun `search and filter can be combined`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "Buy milk", priority = Priority.HIGH))
+        repository.insertTask(Task(title = "Buy eggs", priority = Priority.HIGH, completed = true))
+        repository.insertTask(Task(title = "Call mom", priority = Priority.LOW))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setFilter(TaskFilter.PENDING)
+        viewModel.setSearchQuery("buy")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(1, state.tasks.size)
+        assertEquals("Buy milk", state.tasks[0].title)
+    }
+
+    @Test
+    fun `clearing search restores all tasks`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "Buy milk"))
+        repository.insertTask(Task(title = "Call mom"))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setSearchQuery("milk")
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(1, (viewModel.uiState.value as HomeUiState.Success).tasks.size)
+
+        viewModel.setSearchQuery("")
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(2, (viewModel.uiState.value as HomeUiState.Success).tasks.size)
+    }
 }

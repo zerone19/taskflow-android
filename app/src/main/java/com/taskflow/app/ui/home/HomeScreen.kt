@@ -72,6 +72,15 @@ fun HomeScreen(
     var isSearching by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
 
+    // Reset search saat kembali ke Home (navigasi dari detail/form).
+    // isSearching & searchQuery adalah state lokal — reset di sini supaya
+    // user tidak melihat hasil search lama yang membingungkan.
+    LaunchedEffect(Unit) {
+        isSearching = false
+        searchQuery = ""
+        viewModel.setSearchQuery("")
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {

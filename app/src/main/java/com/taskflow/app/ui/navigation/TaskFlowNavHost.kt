@@ -28,7 +28,6 @@ fun TaskFlowNavHost(taskRepository: TaskRepository) {
                 }
             )
         }
-
         composable(
             route = Routes.TASK_DETAIL,
             arguments = listOf(navArgument("taskId") { type = NavType.LongType })

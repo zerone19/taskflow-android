@@ -1,5 +1,6 @@
 package com.taskflow.app.ui.component
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +14,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,13 +25,13 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.taskflow.app.data.model.Task
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
- * TaskCard — ElevatedCard dengan checkbox, title, description, priority chip.
- * Mengikuti DESIGN.md section "Task Cards (ElevatedCard)":
- * - 12dp–16dp corner radius, 16dp internal padding
- * - Checkbox di kiri, title + description di tengah, priority chip di atas
- * - Completed state: strikethrough + opacity rendah
+ * TaskCard — ElevatedCard dengan checkbox, title, description, priority chip,
+ * due date, dan tags. Mengikuti DESIGN.md section "Task Cards (ElevatedCard)".
  */
 @Composable
 fun TaskCard(
@@ -96,6 +96,36 @@ fun TaskCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
+                }
+
+                // Due date (jika ada)
+                if (task.dueDate != null) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    val fmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                    val isOverdue = !task.completed && task.dueDate < System.currentTimeMillis()
+                    Text(
+                        text = if (isOverdue) "Overdue: ${fmt.format(Date(task.dueDate))}"
+                        else "Due: ${fmt.format(Date(task.dueDate))}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isOverdue) MaterialTheme.colorScheme.error
+                        else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                // Tags (jika ada)
+                if (task.tags.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        task.tags.forEach { tag ->
+                            Text(
+                                text = "#$tag",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
                 }
             }
         }

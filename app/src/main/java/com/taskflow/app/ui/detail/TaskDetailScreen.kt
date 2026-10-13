@@ -43,6 +43,9 @@ import com.taskflow.app.ui.theme.MarginMobile
 import com.taskflow.app.ui.theme.SpaceLG
 import com.taskflow.app.ui.theme.SpaceMD
 import com.taskflow.app.ui.theme.SpaceSM
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,7 +145,34 @@ fun TaskDetailScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(SpaceMD))
+                    Spacer(modifier = Modifier.height(SpaceSM))
+
+                    // Due date (jika ada)
+                    state.task.dueDate?.let { millis ->
+                        val fmt = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+                        Text(
+                            text = "Due: ${fmt.format(Date(millis))}",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.height(SpaceSM))
+                    }
+
+                    // Tags (jika ada)
+                    if (state.task.tags.isNotEmpty()) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(SpaceSM)
+                        ) {
+                            state.task.tags.forEach { tag ->
+                                Text(
+                                    text = "#$tag",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(SpaceMD))
+                    }
 
                     Text(
                         text = if (state.task.completed) "Completed" else "Pending",
