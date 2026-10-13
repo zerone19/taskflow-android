@@ -19,6 +19,15 @@ enum class TaskSort {
     NEWEST, OLDEST, PRIORITY_HIGH_FIRST, DUE_DATE
 }
 
+data class MomentumSummary(
+    val total: Int = 0,
+    val completed: Int = 0,
+    val remaining: Int = 0
+) {
+    val progressPercent: Int
+        get() = if (total == 0) 0 else (completed * 100 / total)
+}
+
 sealed interface HomeUiState {
     data object Loading : HomeUiState
     data object Empty : HomeUiState
@@ -26,7 +35,8 @@ sealed interface HomeUiState {
         val tasks: List<Task> = emptyList(),
         val filter: TaskFilter = TaskFilter.ALL,
         val searchQuery: String = "",
-        val sort: TaskSort = TaskSort.NEWEST
+        val sort: TaskSort = TaskSort.NEWEST,
+        val momentum: MomentumSummary = MomentumSummary()
     ) : HomeUiState
     data class Error(val message: String) : HomeUiState
 }
@@ -70,7 +80,8 @@ class HomeViewModel(
                             tasks = filtered,
                             filter = currentFilter,
                             searchQuery = currentSearch,
-                            sort = currentSort
+                            sort = currentSort,
+                            momentum = computeMomentum(tasks)
                         )
                     }
                 }
@@ -101,7 +112,8 @@ class HomeViewModel(
                 tasks = filtered,
                 filter = filter,
                 searchQuery = currentSearch,
-                sort = currentSort
+                sort = currentSort,
+                momentum = computeMomentum(allTasks)
             )
         }
     }
@@ -120,7 +132,8 @@ class HomeViewModel(
                 tasks = filtered,
                 filter = currentFilter,
                 searchQuery = query,
-                sort = currentSort
+                sort = currentSort,
+                momentum = computeMomentum(allTasks)
             )
         }
     }
@@ -139,7 +152,8 @@ class HomeViewModel(
                 tasks = filtered,
                 filter = currentFilter,
                 searchQuery = currentSearch,
-                sort = sort
+                sort = sort,
+                momentum = computeMomentum(allTasks)
             )
         }
     }
@@ -159,6 +173,12 @@ class HomeViewModel(
         viewModelScope.launch {
             taskRepository.insertTask(task.copy(id = 0))
         }
+    }
+
+    private fun computeMomentum(tasks: List<Task>): MomentumSummary {
+        val total = tasks.size
+        val completed = tasks.count { it.completed }
+        return MomentumSummary(total = total, completed = completed, remaining = total - completed)
     }
 
     private fun applyFilter(tasks: List<Task>, filter: TaskFilter): List<Task> {

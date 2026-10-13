@@ -17,6 +17,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -50,6 +52,7 @@ import com.taskflow.app.R
 import com.taskflow.app.data.repository.TaskRepository
 import com.taskflow.app.ui.component.EmptyState
 import com.taskflow.app.ui.component.FilterChips
+import com.taskflow.app.ui.component.MomentumCard
 import com.taskflow.app.ui.component.TaskCard
 import com.taskflow.app.ui.theme.SpaceMD
 import com.taskflow.app.ui.theme.SpaceSM
@@ -66,6 +69,8 @@ fun HomeScreen(
     onAddTaskClick: () -> Unit,
     deletedTask: com.taskflow.app.data.model.Task? = null,
     onUndoConsumed: () -> Unit = {},
+    isDarkMode: Boolean = false,
+    onToggleTheme: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val viewModel: HomeViewModel = viewModel(
@@ -152,6 +157,14 @@ fun HomeScreen(
                         IconButton(onClick = { isSearching = true }) {
                             Icon(Icons.Filled.Search, contentDescription = "Search tasks")
                         }
+                        IconButton(onClick = { onToggleTheme(!isDarkMode) }) {
+                            Icon(
+                                imageVector = if (isDarkMode) Icons.Filled.LightMode
+                                else Icons.Filled.DarkMode,
+                                contentDescription = if (isDarkMode) "Switch to light mode"
+                                else "Switch to dark mode"
+                            )
+                        }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer
@@ -201,31 +214,36 @@ fun HomeScreen(
 
             is HomeUiState.Success -> {
                 Column(modifier = Modifier.fillMaxSize()) {
-                    FilterChips(
-                        selectedFilter = state.filter,
-                        onFilterSelected = viewModel::setFilter
-                    )
-                    // Sort chips
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = SpaceMD),
-                        horizontalArrangement = Arrangement.spacedBy(SpaceSM)
-                    ) {
-                        items(TaskSort.entries.toList()) { sort ->
-                            FilterChip(
-                                selected = sort == state.sort,
-                                onClick = { viewModel.setSort(sort) },
-                                label = { Text(sort.label) }
-                            )
-                        }
-                    }
                     LazyColumn(
                         modifier = Modifier
-                            .fillMaxSize()
+                            .weight(1f)
                             .padding(paddingValues),
                         contentPadding = PaddingValues(SpaceMD),
                         verticalArrangement = Arrangement.spacedBy(SpaceSM)
                     ) {
+                        item {
+                            MomentumCard(momentum = state.momentum)
+                        }
+                        item {
+                            FilterChips(
+                                selectedFilter = state.filter,
+                                onFilterSelected = viewModel::setFilter
+                            )
+                        }
+                        item {
+                            LazyRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(SpaceSM)
+                            ) {
+                                items(TaskSort.entries.toList()) { sort ->
+                                    FilterChip(
+                                        selected = sort == state.sort,
+                                        onClick = { viewModel.setSort(sort) },
+                                        label = { Text(sort.label) }
+                                    )
+                                }
+                            }
+                        }
                         items(state.tasks, key = { it.id }) { task ->
                             TaskCard(
                                 task = task,

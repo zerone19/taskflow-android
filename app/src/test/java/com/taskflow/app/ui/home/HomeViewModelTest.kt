@@ -249,4 +249,28 @@ class HomeViewModelTest {
         assertEquals(1, state.tasks.size)
         assertEquals("Deleted task", state.tasks[0].title)
     }
+
+    @Test
+    fun `momentum summary reflects completed and remaining`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "Task 1", completed = true))
+        repository.insertTask(Task(title = "Task 2", completed = false))
+        repository.insertTask(Task(title = "Task 3", completed = true))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(3, state.momentum.total)
+        assertEquals(2, state.momentum.completed)
+        assertEquals(1, state.momentum.remaining)
+        assertEquals(66, state.momentum.progressPercent)
+    }
+
+    @Test
+    fun `momentum summary is zero when no tasks`() = runTest(testDispatcher) {
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // No tasks → Empty state, momentum not available
+        assertTrue(viewModel.uiState.value is HomeUiState.Empty)
+    }
 }

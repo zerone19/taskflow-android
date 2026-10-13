@@ -15,7 +15,11 @@ import com.taskflow.app.ui.form.TaskFormScreen
 import com.taskflow.app.ui.home.HomeScreen
 
 @Composable
-fun TaskFlowNavHost(taskRepository: TaskRepository) {
+fun TaskFlowNavHost(
+    taskRepository: TaskRepository,
+    isDarkMode: Boolean = false,
+    onToggleTheme: (Boolean) -> Unit = {}
+) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
@@ -37,7 +41,9 @@ fun TaskFlowNavHost(taskRepository: TaskRepository) {
                 deletedTask = deletedTask,
                 onUndoConsumed = {
                     backStackEntry.savedStateHandle["deleted_task"] = null
-                }
+                },
+                isDarkMode = isDarkMode,
+                onToggleTheme = onToggleTheme
             )
         }
         composable(Routes.TASK_DETAIL,
