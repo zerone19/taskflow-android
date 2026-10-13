@@ -70,24 +70,38 @@ app/src/main/java/com/taskflow/app/
 # UI test (21 test, butuh emulator/device)
 ./gradlew connectedDebugAndroidTest
 
-# Build APK debug
+# Build APK debug (auto-signed dengan debug keystore)
 ./gradlew assembleDebug
 
-# Build release APK + AAB (unsigned)
+# Build release APK + AAB (butuh keystore.properties — lihat di bawah)
 ./gradlew assembleRelease bundleRelease
 ```
 
 ## Install APK Release
 
-Unduh dari [Releases](https://github.com/zerone19/taskflow-android/releases/tag/v1.0.0):
-`TaskFlow-v1.0.0-release-unsigned.apk`
+Unduh dari [Releases](https://github.com/zerone19/taskflow-android/releases) —
+file `TaskFlow-v*.apk` (bukan `.aab`; AAB hanya untuk Google Play).
 
 1. Transfer APK ke HP Android
 2. Aktifkan "Install unknown apps" untuk browser/file manager
 3. Buka APK → install
 
-> Catatan: APK release bersifat **unsigned** — cukup untuk testing/sideload.
-> Untuk Google Play perlu signing dengan release keystore (tidak ada di repo).
+> APK release **sudah ditandatangani** dengan release keystore, jadi bisa
+> langsung di-install dan bisa di-update antar versi (asalkan tetap ditandatangani
+> dengan keystore yang sama).
+
+## Signing & CI
+
+- Release APK/AAB ditandatangani via `keystore.properties` di root project
+  (di-gitignore, **jangan pernah di-commit**). File keystore disimpan di luar repo.
+- Workflow CI (`.github/workflows/release-apk.yml`) otomatis build + sign +
+  upload APK & AAB ke GitHub Release setiap kali push tag `v*`:
+  ```bash
+  git tag v1.0.2
+  git push origin v1.0.2
+  ```
+  Kredensial signing di-set sebagai repo secrets (`ANDROID_KEYSTORE_*`).
+
 
 ## Verifikasi
 
