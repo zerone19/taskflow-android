@@ -3,7 +3,9 @@ package com.taskflow.app.ui.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.taskflow.app.data.model.Subtask
 import com.taskflow.app.data.model.Task
+import com.taskflow.app.data.repository.SubtaskRepository
 import com.taskflow.app.data.repository.TaskRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +24,7 @@ sealed interface TaskDetailUiState {
 
 class TaskDetailViewModel(
     private val taskRepository: TaskRepository,
+    private val subtaskRepository: SubtaskRepository,
     private val taskId: Long
 ) : ViewModel() {
 
@@ -32,8 +35,12 @@ class TaskDetailViewModel(
     private val _deletedTask = MutableSharedFlow<Task>(extraBufferCapacity = 1)
     val deletedTask: SharedFlow<Task> = _deletedTask.asSharedFlow()
 
+    private val _subtasks = MutableStateFlow<List<Subtask>>(emptyList())
+    val subtasks: StateFlow<List<Subtask>> = _subtasks.asStateFlow()
+
     init {
         loadTask()
+        observeSubtasks()
     }
 
     private fun loadTask() {
@@ -51,6 +58,14 @@ class TaskDetailViewModel(
         }
     }
 
+    private fun observeSubtasks() {
+        viewModelScope.launch {
+            subtaskRepository.getSubtasksForTask(taskId).collect { list ->
+                _subtasks.value = list
+            }
+        }
+    }
+
     fun toggleComplete() {
         val current = _uiState.value
         if (current is TaskDetailUiState.Success) {
@@ -62,6 +77,19 @@ class TaskDetailViewModel(
                 taskRepository.updateTask(updated)
                 _uiState.value = TaskDetailUiState.Success(updated)
             }
+        }
+    }
+
+    fun addSubtask(title: String) {
+        if (title.isBlank()) return
+        viewModelScope.launch {
+            subtaskRepository.insertSubtask(Subtask(taskId = taskId, title = title))
+        }
+    }
+
+    fun toggleSubtask(subtask: Subtask) {
+        viewModelScope.launch {
+            subtaskRepository.updateSubtask(subtask.copy(completed = !subtask.completed))
         }
     }
 
@@ -91,12 +119,13 @@ class TaskDetailViewModel(
 
 class TaskDetailViewModelFactory(
     private val taskRepository: TaskRepository,
+    private val subtaskRepository: SubtaskRepository,
     private val taskId: Long
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(TaskDetailViewModel::class.java)) {
-            return TaskDetailViewModel(taskRepository, taskId) as T
+            return TaskDetailViewModel(taskRepository, subtaskRepository, taskId) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

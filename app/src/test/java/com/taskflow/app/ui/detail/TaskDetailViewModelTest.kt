@@ -1,8 +1,10 @@
 package com.taskflow.app.ui.detail
 
+import com.taskflow.app.data.local.testing.FakeSubtaskDao
 import com.taskflow.app.data.local.testing.FakeTaskDao
 import com.taskflow.app.data.model.Priority
 import com.taskflow.app.data.model.Task
+import com.taskflow.app.data.repository.DefaultSubtaskRepository
 import com.taskflow.app.data.repository.DefaultTaskRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -33,6 +35,7 @@ class TaskDetailViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var dao: FakeTaskDao
     private lateinit var repository: DefaultTaskRepository
+    private lateinit var subtaskRepository: DefaultSubtaskRepository
     private lateinit var viewModel: TaskDetailViewModel
     private var taskId: Long = 0L
 
@@ -41,8 +44,9 @@ class TaskDetailViewModelTest {
         Dispatchers.setMain(testDispatcher)
         dao = FakeTaskDao()
         repository = DefaultTaskRepository(dao)
+        subtaskRepository = DefaultSubtaskRepository(FakeSubtaskDao())
         taskId = dao.insertTaskSync(Task(title = "Refactor Auth", priority = Priority.HIGH))
-        viewModel = TaskDetailViewModel(repository, taskId)
+        viewModel = TaskDetailViewModel(repository, subtaskRepository, taskId)
     }
 
     @After

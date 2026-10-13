@@ -8,6 +8,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
@@ -15,12 +18,14 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,9 +39,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.taskflow.app.data.repository.SubtaskRepository
 import com.taskflow.app.data.repository.TaskRepository
 import com.taskflow.app.ui.component.PriorityChip
 import com.taskflow.app.ui.theme.MarginMobile
@@ -51,6 +58,7 @@ import java.util.Locale
 @Composable
 fun TaskDetailScreen(
     taskRepository: TaskRepository,
+    subtaskRepository: com.taskflow.app.data.repository.SubtaskRepository,
     taskId: Long,
     onEditClick: (Long) -> Unit,
     onBackClick: () -> Unit,
@@ -58,7 +66,7 @@ fun TaskDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val viewModel: TaskDetailViewModel = viewModel(
-        factory = TaskDetailViewModelFactory(taskRepository, taskId)
+        factory = TaskDetailViewModelFactory(taskRepository, subtaskRepository, taskId)
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
@@ -133,6 +141,7 @@ fun TaskDetailScreen(
                         .fillMaxSize()
                         .padding(paddingValues)
                         .padding(MarginMobile)
+                        .verticalScroll(rememberScrollState())
                 ) {
                     PriorityChip(priority = state.task.priority)
 
@@ -188,6 +197,57 @@ fun TaskDetailScreen(
                         color = if (state.task.completed) MaterialTheme.colorScheme.primary
                         else MaterialTheme.colorScheme.onSurfaceVariant
                     )
+
+                    Spacer(modifier = Modifier.height(SpaceLG))
+
+                    // Subtasks checklist
+                    val subtasks by viewModel.subtasks.collectAsStateWithLifecycle()
+                    Text(
+                        text = "Subtasks (${subtasks.count { it.completed }}/${subtasks.size})",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+                    Spacer(modifier = Modifier.height(SpaceSM))
+                    subtasks.forEach { subtask ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = subtask.completed,
+                                onCheckedChange = { viewModel.toggleSubtask(subtask) }
+                            )
+                            Text(
+                                text = subtask.title,
+                                style = MaterialTheme.typography.bodyMedium,
+                                textDecoration = if (subtask.completed) TextDecoration.LineThrough
+                                else TextDecoration.None
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(SpaceSM))
+                    var newSubtaskTitle by remember { mutableStateOf("") }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        OutlinedTextField(
+                            value = newSubtaskTitle,
+                            onValueChange = { newSubtaskTitle = it },
+                            placeholder = { Text("Add subtask...") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true
+                        )
+                        Spacer(modifier = Modifier.width(SpaceSM))
+                        Button(
+                            onClick = {
+                                viewModel.addSubtask(newSubtaskTitle)
+                                newSubtaskTitle = ""
+                            },
+                            enabled = newSubtaskTitle.isNotBlank()
+                        ) {
+                            Text("Add")
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(SpaceLG))
 

@@ -1,0 +1,30 @@
+package com.taskflow.app.data.local
+
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+
+/**
+ * Room entity untuk Subtask — checklist item yang dimiliki oleh sebuah Task.
+ * Foreign key ke TaskEntity — jika Task dihapus, subtask ikut terhapus (CASCADE).
+ */
+@Entity(
+    tableName = "subtasks",
+    foreignKeys = [
+        ForeignKey(
+            entity = TaskEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["taskId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("taskId")]
+)
+data class SubtaskEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val taskId: Long,
+    val title: String,
+    val completed: Boolean = false
+)

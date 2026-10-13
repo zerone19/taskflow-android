@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     TaskFlowNavHost(
                         taskRepository = appContainer.taskRepository,
+                        subtaskRepository = appContainer.subtaskRepository,
                         isDarkMode = darkTheme,
                         onToggleTheme = { enabled ->
                             kotlinx.coroutines.MainScope().launch {

@@ -17,6 +17,7 @@ import com.taskflow.app.ui.home.HomeScreen
 @Composable
 fun TaskFlowNavHost(
     taskRepository: TaskRepository,
+    subtaskRepository: com.taskflow.app.data.repository.SubtaskRepository,
     isDarkMode: Boolean = false,
     onToggleTheme: (Boolean) -> Unit = {}
 ) {
@@ -52,6 +53,7 @@ fun TaskFlowNavHost(
             val taskId = backStackEntry.arguments?.getLong("taskId") ?: -1L
             TaskDetailScreen(
                 taskRepository = taskRepository,
+                subtaskRepository = subtaskRepository,
                 taskId = taskId,
                 onEditClick = { id ->
                     navController.navigate(Routes.taskForm(id))
