@@ -1,11 +1,14 @@
 package com.taskflow.app.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.taskflow.app.data.model.Task
 import com.taskflow.app.data.repository.TaskRepository
 import com.taskflow.app.ui.detail.TaskDetailScreen
 import com.taskflow.app.ui.form.TaskFormScreen
@@ -17,7 +20,12 @@ fun TaskFlowNavHost(taskRepository: TaskRepository) {
 
     NavHost(navController = navController, startDestination = Routes.HOME) {
 
-        composable(Routes.HOME) {
+        composable(Routes.HOME) { backStackEntry ->
+            // Baca deleted_task dari savedStateHandle untuk Undo Snackbar.
+            val deletedTask by backStackEntry.savedStateHandle
+                .getStateFlow<Task?>("deleted_task", null)
+                .collectAsStateWithLifecycle()
+
             HomeScreen(
                 taskRepository = taskRepository,
                 onTaskClick = { taskId ->
@@ -25,11 +33,14 @@ fun TaskFlowNavHost(taskRepository: TaskRepository) {
                 },
                 onAddTaskClick = {
                     navController.navigate(Routes.taskForm())
+                },
+                deletedTask = deletedTask,
+                onUndoConsumed = {
+                    backStackEntry.savedStateHandle["deleted_task"] = null
                 }
             )
         }
-        composable(
-            route = Routes.TASK_DETAIL,
+        composable(Routes.TASK_DETAIL,
             arguments = listOf(navArgument("taskId") { type = NavType.LongType })
         ) { backStackEntry ->
             val taskId = backStackEntry.arguments?.getLong("taskId") ?: -1L
@@ -41,6 +52,12 @@ fun TaskFlowNavHost(taskRepository: TaskRepository) {
                 },
                 onBackClick = {
                     navController.popBackStack()
+                },
+                onTaskDeleted = { deletedTask ->
+                    // Tampilkan Undo Snackbar di HomeScreen via savedStateHandle
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle
+                        ?.set("deleted_task", deletedTask)
                 }
             )
         }

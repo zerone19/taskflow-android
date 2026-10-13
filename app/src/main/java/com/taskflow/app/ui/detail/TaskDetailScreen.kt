@@ -54,6 +54,7 @@ fun TaskDetailScreen(
     taskId: Long,
     onEditClick: (Long) -> Unit,
     onBackClick: () -> Unit,
+    onTaskDeleted: (com.taskflow.app.data.model.Task) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val viewModel: TaskDetailViewModel = viewModel(
@@ -61,6 +62,13 @@ fun TaskDetailScreen(
     )
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Collect deletedTask — teruskan ke HomeScreen untuk Undo Snackbar.
+    LaunchedEffect(Unit) {
+        viewModel.deletedTask.collect { task ->
+            onTaskDeleted(task)
+        }
+    }
 
     // Pop hanya setelah penghapusan benar-benar terkonfirmasi (state Deleted),
     // BUKAN langsung setelah memanggil deleteTask() — menghindari race dengan Room.

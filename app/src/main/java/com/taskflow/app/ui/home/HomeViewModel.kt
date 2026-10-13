@@ -15,13 +15,18 @@ enum class TaskFilter {
     ALL, PENDING, HIGH_PRIORITY, COMPLETED
 }
 
+enum class TaskSort {
+    NEWEST, OLDEST, PRIORITY_HIGH_FIRST, DUE_DATE
+}
+
 sealed interface HomeUiState {
     data object Loading : HomeUiState
     data object Empty : HomeUiState
     data class Success(
         val tasks: List<Task> = emptyList(),
         val filter: TaskFilter = TaskFilter.ALL,
-        val searchQuery: String = ""
+        val searchQuery: String = "",
+        val sort: TaskSort = TaskSort.NEWEST
     ) : HomeUiState
     data class Error(val message: String) : HomeUiState
 }
@@ -46,6 +51,7 @@ class HomeViewModel(
     private fun loadTasks() {
         viewModelScope.launch {
             val currentSearch = (_uiState.value as? HomeUiState.Success)?.searchQuery ?: ""
+            val currentSort = (_uiState.value as? HomeUiState.Success)?.sort ?: TaskSort.NEWEST
             taskRepository.getAllTasks()
                 .catch { e ->
                     _uiState.value = HomeUiState.Error(e.message ?: "Unknown error")
@@ -56,13 +62,15 @@ class HomeViewModel(
                         ?: TaskFilter.ALL
                     val filtered = applyFilter(tasks, currentFilter)
                         .let { if (currentSearch.isNotBlank()) applySearch(it, currentSearch) else it }
+                        .let { applySort(it, currentSort) }
                     _uiState.value = if (filtered.isEmpty() && tasks.isEmpty()) {
                         HomeUiState.Empty
                     } else {
                         HomeUiState.Success(
                             tasks = filtered,
                             filter = currentFilter,
-                            searchQuery = currentSearch
+                            searchQuery = currentSearch,
+                            sort = currentSort
                         )
                     }
                 }
@@ -82,15 +90,18 @@ class HomeViewModel(
 
     fun setFilter(filter: TaskFilter) {
         val currentSearch = (_uiState.value as? HomeUiState.Success)?.searchQuery ?: ""
+        val currentSort = (_uiState.value as? HomeUiState.Success)?.sort ?: TaskSort.NEWEST
         val filtered = applyFilter(allTasks, filter)
             .let { if (currentSearch.isNotBlank()) applySearch(it, currentSearch) else it }
+            .let { applySort(it, currentSort) }
         _uiState.value = if (filtered.isEmpty() && allTasks.isEmpty()) {
             HomeUiState.Empty
         } else {
             HomeUiState.Success(
                 tasks = filtered,
                 filter = filter,
-                searchQuery = currentSearch
+                searchQuery = currentSearch,
+                sort = currentSort
             )
         }
     }
@@ -98,15 +109,37 @@ class HomeViewModel(
     fun setSearchQuery(query: String) {
         val currentFilter = (_uiState.value as? HomeUiState.Success)?.filter
             ?: TaskFilter.ALL
+        val currentSort = (_uiState.value as? HomeUiState.Success)?.sort ?: TaskSort.NEWEST
         val filtered = applyFilter(allTasks, currentFilter)
             .let { if (query.isNotBlank()) applySearch(it, query) else it }
+            .let { applySort(it, currentSort) }
         _uiState.value = if (filtered.isEmpty() && allTasks.isEmpty()) {
             HomeUiState.Empty
         } else {
             HomeUiState.Success(
                 tasks = filtered,
                 filter = currentFilter,
-                searchQuery = query
+                searchQuery = query,
+                sort = currentSort
+            )
+        }
+    }
+
+    fun setSort(sort: TaskSort) {
+        val currentFilter = (_uiState.value as? HomeUiState.Success)?.filter
+            ?: TaskFilter.ALL
+        val currentSearch = (_uiState.value as? HomeUiState.Success)?.searchQuery ?: ""
+        val filtered = applyFilter(allTasks, currentFilter)
+            .let { if (currentSearch.isNotBlank()) applySearch(it, currentSearch) else it }
+            .let { applySort(it, sort) }
+        _uiState.value = if (filtered.isEmpty() && allTasks.isEmpty()) {
+            HomeUiState.Empty
+        } else {
+            HomeUiState.Success(
+                tasks = filtered,
+                filter = currentFilter,
+                searchQuery = currentSearch,
+                sort = sort
             )
         }
     }
@@ -118,6 +151,13 @@ class HomeViewModel(
                 updatedAt = System.currentTimeMillis()
             )
             taskRepository.updateTask(updated)
+        }
+    }
+
+    /** Undo delete — re-insert task yang baru dihapus. */
+    fun undoDelete(task: Task) {
+        viewModelScope.launch {
+            taskRepository.insertTask(task.copy(id = 0))
         }
     }
 
@@ -134,6 +174,23 @@ class HomeViewModel(
         return tasks.filter {
             it.title.contains(query, ignoreCase = true) ||
                 it.description.contains(query, ignoreCase = true)
+        }
+    }
+
+    private fun applySort(tasks: List<Task>, sort: TaskSort): List<Task> {
+        return when (sort) {
+            TaskSort.NEWEST -> tasks.sortedByDescending { it.createdAt }
+            TaskSort.OLDEST -> tasks.sortedBy { it.createdAt }
+            TaskSort.PRIORITY_HIGH_FIRST -> tasks.sortedByDescending {
+                when (it.priority) {
+                    Priority.HIGH -> 3
+                    Priority.MEDIUM -> 2
+                    Priority.LOW -> 1
+                }
+            }
+            TaskSort.DUE_DATE -> tasks.sortedWith(
+                compareBy(nullsFirst()) { it.dueDate }
+            )
         }
     }
 }

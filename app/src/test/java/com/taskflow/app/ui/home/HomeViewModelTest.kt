@@ -185,4 +185,68 @@ class HomeViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(2, (viewModel.uiState.value as HomeUiState.Success).tasks.size)
     }
+
+    @Test
+    fun `sort by priority puts high first`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "Low task", priority = Priority.LOW))
+        repository.insertTask(Task(title = "High task", priority = Priority.HIGH))
+        repository.insertTask(Task(title = "Medium task", priority = Priority.MEDIUM))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setSort(TaskSort.PRIORITY_HIGH_FIRST)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(3, state.tasks.size)
+        assertEquals(Priority.HIGH, state.tasks[0].priority)
+        assertEquals(Priority.MEDIUM, state.tasks[1].priority)
+        assertEquals(Priority.LOW, state.tasks[2].priority)
+    }
+
+    @Test
+    fun `sort by due date puts earliest first`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "Task B", dueDate = 2000L))
+        repository.insertTask(Task(title = "Task A", dueDate = 1000L))
+        repository.insertTask(Task(title = "Task C", dueDate = 3000L))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setSort(TaskSort.DUE_DATE)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals("Task A", state.tasks[0].title)
+        assertEquals("Task B", state.tasks[1].title)
+        assertEquals("Task C", state.tasks[2].title)
+    }
+
+    @Test
+    fun `sort by oldest puts oldest first`() = runTest(testDispatcher) {
+        repository.insertTask(Task(title = "New", createdAt = 2000L))
+        repository.insertTask(Task(title = "Old", createdAt = 1000L))
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setSort(TaskSort.OLDEST)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals("Old", state.tasks[0].title)
+        assertEquals("New", state.tasks[1].title)
+    }
+
+    @Test
+    fun `undoDelete re-inserts task`() = runTest(testDispatcher) {
+        val task = Task(title = "Deleted task", priority = Priority.HIGH)
+        viewModel.startObserving()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.undoDelete(task)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as HomeUiState.Success
+        assertEquals(1, state.tasks.size)
+        assertEquals("Deleted task", state.tasks[0].title)
+    }
 }

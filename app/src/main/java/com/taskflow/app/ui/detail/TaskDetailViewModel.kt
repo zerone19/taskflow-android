@@ -5,8 +5,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.taskflow.app.data.model.Task
 import com.taskflow.app.data.repository.TaskRepository
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -24,6 +27,10 @@ class TaskDetailViewModel(
 
     private val _uiState = MutableStateFlow<TaskDetailUiState>(TaskDetailUiState.Loading)
     val uiState: StateFlow<TaskDetailUiState> = _uiState.asStateFlow()
+
+    /** Emit task yang baru dihapus, untuk fitur Undo Delete (re-insert). */
+    private val _deletedTask = MutableSharedFlow<Task>(extraBufferCapacity = 1)
+    val deletedTask: SharedFlow<Task> = _deletedTask.asSharedFlow()
 
     init {
         loadTask()
@@ -70,6 +77,7 @@ class TaskDetailViewModel(
             viewModelScope.launch {
                 try {
                     taskRepository.deleteTask(current.task)
+                    _deletedTask.tryEmit(current.task)  // untuk Undo
                     _uiState.value = TaskDetailUiState.Deleted
                 } catch (e: Exception) {
                     _uiState.value = TaskDetailUiState.Error(

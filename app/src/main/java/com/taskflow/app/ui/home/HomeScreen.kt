@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -20,10 +21,15 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -58,6 +64,8 @@ fun HomeScreen(
     taskRepository: TaskRepository,
     onTaskClick: (Long) -> Unit,
     onAddTaskClick: () -> Unit,
+    deletedTask: com.taskflow.app.data.model.Task? = null,
+    onUndoConsumed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val viewModel: HomeViewModel = viewModel(
@@ -81,8 +89,26 @@ fun HomeScreen(
         viewModel.setSearchQuery("")
     }
 
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Tampilkan Undo Snackbar ketika ada task yang baru dihapus.
+    LaunchedEffect(deletedTask) {
+        deletedTask?.let { task ->
+            val result = snackbarHostState.showSnackbar(
+                message = "Task deleted",
+                actionLabel = "UNDO",
+                duration = SnackbarDuration.Short
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.undoDelete(task)
+            }
+            onUndoConsumed()
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             if (isSearching) {
                 TextField(
@@ -179,6 +205,20 @@ fun HomeScreen(
                         selectedFilter = state.filter,
                         onFilterSelected = viewModel::setFilter
                     )
+                    // Sort chips
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = SpaceMD),
+                        horizontalArrangement = Arrangement.spacedBy(SpaceSM)
+                    ) {
+                        items(TaskSort.entries.toList()) { sort ->
+                            FilterChip(
+                                selected = sort == state.sort,
+                                onClick = { viewModel.setSort(sort) },
+                                label = { Text(sort.label) }
+                            )
+                        }
+                    }
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
@@ -199,3 +239,11 @@ fun HomeScreen(
         }
     }
 }
+
+private val TaskSort.label: String
+    get() = when (this) {
+        TaskSort.NEWEST -> "Newest"
+        TaskSort.OLDEST -> "Oldest"
+        TaskSort.PRIORITY_HIGH_FIRST -> "Priority"
+        TaskSort.DUE_DATE -> "Due Date"
+    }
