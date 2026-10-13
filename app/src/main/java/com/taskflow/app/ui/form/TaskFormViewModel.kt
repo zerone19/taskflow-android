@@ -15,6 +15,8 @@ data class TaskFormState(
     val title: String = "",
     val description: String = "",
     val priority: Priority = Priority.MEDIUM,
+    val dueDate: Long? = null,
+    val tags: List<String> = emptyList(),
     val titleError: String? = null,
     val saveError: String? = null,
     val isSaving: Boolean = false
@@ -42,7 +44,9 @@ class TaskFormViewModel(
                 _formState.value = TaskFormState(
                     title = task.title,
                     description = task.description,
-                    priority = task.priority
+                    priority = task.priority,
+                    dueDate = task.dueDate,
+                    tags = task.tags
                 )
             }
         }
@@ -58,6 +62,16 @@ class TaskFormViewModel(
 
     fun onPriorityChange(priority: Priority) {
         _formState.value = _formState.value.copy(priority = priority)
+    }
+
+    fun onDueDateChange(dueDate: Long?) {
+        _formState.value = _formState.value.copy(dueDate = dueDate)
+    }
+
+    fun onTagToggle(tag: String) {
+        val current = _formState.value.tags
+        val updated = if (tag in current) current - tag else current + tag
+        _formState.value = _formState.value.copy(tags = updated)
     }
 
     fun save(onSuccess: () -> Unit) {
@@ -83,6 +97,8 @@ class TaskFormViewModel(
                                 title = state.title,
                                 description = state.description,
                                 priority = state.priority,
+                                dueDate = state.dueDate,
+                                tags = state.tags,
                                 updatedAt = now
                             )
                         )
@@ -94,6 +110,8 @@ class TaskFormViewModel(
                             title = state.title,
                             description = state.description,
                             priority = state.priority,
+                            dueDate = state.dueDate,
+                            tags = state.tags,
                             createdAt = now,
                             updatedAt = now
                         )

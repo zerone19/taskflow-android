@@ -22,10 +22,7 @@ data class Task(
     val priority: Priority = Priority.MEDIUM,
     val completed: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-    // Field opsional untuk masa depan (tidak dirender di v1):
-    // val dueDate: Long? = null,
-    // val tags: List<String> = emptyList(),
-    // val assignee: String? = null,
-    // val storyPoints: Int? = null,
+    val updatedAt: Long = System.currentTimeMillis(),
+    val dueDate: Long? = null,       // epoch millis; null = tidak ada deadline
+    val tags: List<String> = emptyList()  // disimpan sebagai comma-separated String di DB
 )

@@ -21,6 +21,12 @@ class DefaultTaskRepository(
         }
     }
 
+    override fun searchTasks(query: String): Flow<List<Task>> {
+        return taskDao.searchTasks(query).map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
     override suspend fun getTaskById(id: Long): Task? {
         return taskDao.getTaskById(id)?.toDomain()
     }

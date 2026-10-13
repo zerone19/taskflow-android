@@ -500,6 +500,105 @@ Create · Complete (toggle) · Edit · Delete (dengan konfirmasi) · Priority (L
 
 ---
 
+### CATATAN IDE — Bottom Navigation Bar (atas permintaan Master, 2026-10-13)
+
+> Status: **IDE TERCATAT — BELUM DIIMPLEMENTASI.** Belum ada perubahan kode sampai
+> Master menyetujui eksekusi. Grounding di bawah, bukan requirement karangan.
+
+**Ide**: Menambahkan **bottom navigation bar** di bawah layar yang berisi 4 tab:
+
+| Tab | Ikon (Material Icons Extended — sudah ada dep) | Screen saat ini |
+|-----|------------------------------------------------|-----------------|
+| TASK | `Checklist` / `ListAlt` | Sudah ada (HomeScreen + flow detail/form) |
+| DATE | `CalendarMonth` / `DateRange` | BELUM ada — butuh spec |
+| AI CHAT | `SmartToy` / `ChatBubble` | BELUM ada — butuh spec (backend AI? lokal?) |
+| SETTING | `Settings` | BELUM ada — placeholder minimal |
+
+**Grounding**:
+- Material 3 `NavigationBar`/`NavigationBarItem` — komponen standar, cocok design system.
+- Ikon: `androidx.compose.material:material-icons-extended` **sudah ada** di
+  `app/build.gradle.kts` → tidak perlu dependency baru untuk ikon.
+- Navigasi: `navigation-compose` **sudah ada**. Perlu refactor kecil `TaskFlowNavHost`
+  agar bottom nav menjadi top-level destination (tab = nested graph / route utama).
+- **Catatan desain**: `DESIGN.md` menyebut bottom nav untuk varian lain (Sprints/Board/
+  Backlog/Analytics/Settings) — label TASK/DATE/AI CHAT/SETTING ini **keputusan Master**,
+  BUKAN dari desain/spec. Tidak mengarang grounding desain untuk label tersebut.
+
+**Konsekuensi teknis (kalau dikerjakan)**:
+- Tab TASK: existing HomeScreen — rendering bottom nav di Scaffold HomeScreen.
+- Tab DATE / AI CHAT / SETTING: butuh keputusan Master — apakah screen placeholder
+  dulu ("coming soon") atau langsung fitur fungsional. Effort berbeda jauh.
+- **AI CHAT**: tab paling besar kompleksitasnya. Perlu keputusan scope: backend AI
+  (butuh API contract + networking Retrofit — belum ada di project), atau UI chat
+  lokal dulu. Jangan disimpulkan sendiri.
+- Backstack tab-top-level: pakai pola M3 (`launchSingleTop`, popUpTo start destination,
+  `saveState`/`restoreState`) agar back button berperilaku benar antar tab.
+- Test: navigasi antar tab + regression HomeScreen/Detail/Form test yang ada.
+
+**Rekomendasi Arona**: mulai dari **skeleton 4 tab** (TASK fungsional dari existing,
+  DATE/AI CHAT/SETTING = placeholder minimal), verifikasi build + navigasi test,
+  BARU kembangkan per-tab berdasarkan keputusan scope Master.
+
+> Bagian ini mencatat USULAN. Belum ada perubahan kode sampai Master memilih.
+
+---
+
+### CATATAN IDE — TASK EXPIRED / Auto-Delete (atas permintaan Master, 2026-10-13)
+
+> Status: **IDE TERCATAT — BELUM DIIMPLEMENTASI.** Belum ada perubahan kode sampai
+> Master menyetujui eksekusi. Catatan ini menyentuh **skema data + operasi destruktif**
+> → perlu keputusan eksplisit Master sebelum dikerjakan (lihat TEST 10).
+
+**Ide**: Task punya batas waktu (expiry). Pengguna mengatur durasi dengan 3 opsi:
+**1 HARI / 7 HARI / 30 HARI**. Jika task melewati batas waktunya → task terhapus
+**permanen** dari database.
+
+**Grounding**:
+- Field `dueDate: Long?` **sudah dikomentari** di `Task.kt` & `TaskEntity.kt`
+  (opsional masa depan) — menambahkan field deadline = grounded, bukan karangan.
+- **TIER 1 #2 (Due Date)** di backlog progress.md sudah mencatat: butuh date picker +
+  query sort/overdue. Fitur ini adalah perluasan dari item tersebut.
+- **WorkManager TIDAK ada** di dependencies `app/build.gradle.kts` saat ini. Mekanisme
+  auto-delete background = dependency BARU (atau alternatif tanpa WorkManager, lihat bawah).
+- Catatan teknis backlog progress.md: perubahan `Task` model + `TaskEntity` + mapper +
+  Room schema → butuh **DB migration (Room version 1 → 2)**. Saat ini
+  `TaskDatabase` version = **1**, dan TIDAK ada migration strategy sama sekali.
+
+**Konsekuensi teknis (kalau dikerjakan)**:
+- **Skema data**: tambah field (mis. `expiresAt: Long?`) di `Task` + `TaskEntity` +
+  mapper. **Migration 1 → 2 wajib** (kolom baru nullable). `fallbackToDestructiveMigration`
+  HANYA dengan izin Master — destruktif, hapus semua data user yang ada.
+- **Mekanisme auto-delete** (perlu keputusan Master — effort & sifat berbeda jauh):
+  1. **WorkManager periodic** (dependency baru) — benar-benar hapus walau app ditutup,
+     andal sesuai "permanen". Paling cocok maksud fitur, tapi tambah kompleksitas +
+     pertimbangan baterai/Doze mode.
+  2. **Cleanup on app start/resume** (tanpa dependency baru) — hapus task expired saat
+     app dibuka. Lebih sederhana, tapi tidak hapus kalau app jarang dibuka.
+  3. **Filter tampilan saja** (query sembunyikan) — TIDAK memenuhi "terhapus permanen",
+     hanya tercatat sebagai opsi yang ditolak kecuali Master ubah maksud.
+- **Trigger hitung deadline**: dari mana patokan waktunya? Opsi:
+  - `createdAt + durasi` (1/7/30 hari sejak task dibuat), atau
+  - user pilih due date eksplisit lalu durasi jadi default/reminder.
+  Perlu konfirmasi Master — ubah maksud fitur.
+- **Completed task**: tetap kena auto-delete permanen, atau exempt? Default apa?
+  Perlu keputusan Master.
+- **Destruktif & permanen**: tidak ada undo. Perlu mekanisme aman — mis. warning
+  eksplisit di UI saat mengaktifkan expiry ("task akan terhapus permanen setelah X").
+  Sesuai arsitektur Arona: tanya Master sebelum operasi destruktif/irreversible.
+- **Test**: DAO query delete-expired + migration test + regression 25 unit test +
+  21 UI test yang ada (migration bisa merusak build bila salah).
+
+**Rekomendasi Arona**:
+1. Konfirmasi dulu 4 keputusan Master di atas (mekanisme delete, patokan waktu,
+   completed exempt?, migration diizinkan?).
+2. Kalau disetujui: migration 1→2 (kolom `expiresAt` nullable) + mekanisme delete yang
+   dipilih + UI setting expiry di TaskForm (3 opsi) + warning destruktif.
+3. Jangan pakai `fallbackToDestructiveMigration` tanpa izin eksplisit Master.
+
+> Bagian ini mencatat USULAN. Belum ada perubahan kode sampai Master memilih.
+
+---
+
 ## Git & Upload ke GitHub
 
 - **Repo lokal diinisialisasi** (`git init -b main`) dengan `.gitignore` Android

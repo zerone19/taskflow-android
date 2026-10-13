@@ -19,6 +19,14 @@ class FakeTaskDao : TaskDao {
 
     override fun getAllTasks(): Flow<List<TaskEntity>> = tasks
 
+    override fun searchTasks(query: String): Flow<List<TaskEntity>> {
+        val filtered = tasks.value.filter {
+            it.title.contains(query, ignoreCase = true) ||
+                it.description.contains(query, ignoreCase = true)
+        }
+        return MutableStateFlow(filtered)
+    }
+
     override suspend fun getTaskById(id: Long): TaskEntity? {
         return tasks.value.find { it.id == id }
     }

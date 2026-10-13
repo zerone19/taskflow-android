@@ -18,7 +18,9 @@ data class TaskEntity(
     val priority: String = "MEDIUM",  // disimpan sebagai String, di-mapping ke enum
     val completed: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val dueDate: Long? = null,  // epoch millis; null = tidak ada deadline
+    val tags: String = ""       // comma-separated; "" = tidak ada tag
 )
 
 // === Mappers ===
@@ -30,7 +32,9 @@ fun TaskEntity.toDomain(): Task = Task(
     priority = Priority.valueOf(priority),
     completed = completed,
     createdAt = createdAt,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    dueDate = dueDate,
+    tags = if (tags.isBlank()) emptyList() else tags.split(",")
 )
 
 fun Task.toEntity(): TaskEntity = TaskEntity(
@@ -40,5 +44,7 @@ fun Task.toEntity(): TaskEntity = TaskEntity(
     priority = priority.name,
     completed = completed,
     createdAt = createdAt,
-    updatedAt = updatedAt
+    updatedAt = updatedAt,
+    dueDate = dueDate,
+    tags = tags.joinToString(",")
 )

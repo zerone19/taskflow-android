@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -14,18 +15,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -35,6 +43,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.taskflow.app.R
 import com.taskflow.app.data.repository.TaskRepository
 import com.taskflow.app.ui.component.EmptyState
+import com.taskflow.app.ui.component.FilterChips
 import com.taskflow.app.ui.component.TaskCard
 import com.taskflow.app.ui.theme.SpaceMD
 import com.taskflow.app.ui.theme.SpaceSM
@@ -60,26 +69,60 @@ fun HomeScreen(
         viewModel.startObserving()
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var isSearching by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_taskflow_logo),
-                            contentDescription = "TaskFlow logo",
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Spacer(modifier = Modifier.width(SpaceSM))
-                        Text("TaskFlow")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+            if (isSearching) {
+                TextField(
+                    value = searchQuery,
+                    onValueChange = { q ->
+                        searchQuery = q
+                        viewModel.setSearchQuery(q)
+                    },
+                    placeholder = { Text("Search tasks...") },
+                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
+                    trailingIcon = {
+                        IconButton(onClick = {
+                            if (searchQuery.isNotEmpty()) {
+                                searchQuery = ""
+                                viewModel.setSearchQuery("")
+                            } else {
+                                isSearching = false
+                                viewModel.setSearchQuery("")
+                            }
+                        }) {
+                            Icon(Icons.Filled.Clear, contentDescription = "Clear search")
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true
                 )
-            )
+            } else {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                painter = painterResource(R.drawable.ic_taskflow_logo),
+                                contentDescription = "TaskFlow logo",
+                                modifier = Modifier.size(28.dp)
+                            )
+                            Spacer(modifier = Modifier.width(SpaceSM))
+                            Text("TaskFlow")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { isSearching = true }) {
+                            Icon(Icons.Filled.Search, contentDescription = "Search tasks")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer
+                    )
+                )
+            }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -122,19 +165,25 @@ fun HomeScreen(
             }
 
             is HomeUiState.Success -> {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentPadding = PaddingValues(SpaceMD),
-                    verticalArrangement = Arrangement.spacedBy(SpaceSM)
-                ) {
-                    items(state.tasks, key = { it.id }) { task ->
-                        TaskCard(
-                            task = task,
-                            onToggleComplete = { viewModel.toggleComplete(it) },
-                            onClick = { onTaskClick(task.id) }
-                        )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    FilterChips(
+                        selectedFilter = state.filter,
+                        onFilterSelected = viewModel::setFilter
+                    )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues),
+                        contentPadding = PaddingValues(SpaceMD),
+                        verticalArrangement = Arrangement.spacedBy(SpaceSM)
+                    ) {
+                        items(state.tasks, key = { it.id }) { task ->
+                            TaskCard(
+                                task = task,
+                                onToggleComplete = { viewModel.toggleComplete(it) },
+                                onClick = { onTaskClick(task.id) }
+                            )
+                        }
                     }
                 }
             }
