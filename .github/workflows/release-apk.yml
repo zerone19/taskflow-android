@@ -22,6 +22,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      - name: Override Gradle version to 8.11.1 (JDK 17 compatible)
+        run: |
+          sed -i 's|gradle-8.14.5-bin.zip|gradle-8.11.1-bin.zip|' gradle/wrapper/gradle-wrapper.properties
+
       - name: Setup Android SDK
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
