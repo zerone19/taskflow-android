@@ -502,8 +502,8 @@ Create · Complete (toggle) · Edit · Delete (dengan konfirmasi) · Priority (L
 
 ### CATATAN IDE — Bottom Navigation Bar (atas permintaan Master, 2026-10-13)
 
-> Status: **IDE TERCATAT — BELUM DIIMPLEMENTASI.** Belum ada perubahan kode sampai
-> Master menyetujui eksekusi. Grounding di bawah, bukan requirement karangan.
+> Status: **✅ SELESAI — DIIMPLEMENTASI** (commit `98e6bf5`). Build + 38 unit test lulus.
+> Keputusan Master: TASK fungsional + DATE/AI CHAT/SETTING = placeholder "Coming Soon".
 
 **Ide**: Menambahkan **bottom navigation bar** di bawah layar yang berisi 4 tab:
 
@@ -539,15 +539,18 @@ Create · Complete (toggle) · Edit · Delete (dengan konfirmasi) · Priority (L
   DATE/AI CHAT/SETTING = placeholder minimal), verifikasi build + navigasi test,
   BARU kembangkan per-tab berdasarkan keputusan scope Master.
 
-> Bagian ini mencatat USULAN. Belum ada perubahan kode sampai Master memilih.
+> Bagian ini mencatat USULAN. **Selesai diimplementasi** — lihat commit `98e6bf5`.
+> Bottom nav: `TaskFlowNavHost` pakai `NavigationBar` M3 dengan `launchSingleTop` +
+> `popUpTo(start)` + `saveState`/`restoreState`. Bottom bar hidden di detail/form.
+> Placeholder screens: `PlaceholderScreen.kt` component.
 
 ---
 
 ### CATATAN IDE — TASK EXPIRED / Auto-Delete (atas permintaan Master, 2026-10-13)
 
-> Status: **IDE TERCATAT — BELUM DIIMPLEMENTASI.** Belum ada perubahan kode sampai
-> Master menyetujui eksekusi. Catatan ini menyentuh **skema data + operasi destruktif**
-> → perlu keputusan eksplisit Master sebelum dikerjakan (lihat TEST 10).
+> Status: **✅ SELESAI — DIIMPLEMENTASI** (commit `98e6bf5`). Build + 38 unit test lulus.
+> Keputusan Master: WorkManager periodic, patokan `createdAt + durasi` (1/7/30 hari),
+> completed task exempt dari auto-delete.
 
 **Ide**: Task punya batas waktu (expiry). Pengguna mengatur durasi dengan 3 opsi:
 **1 HARI / 7 HARI / 30 HARI**. Jika task melewati batas waktunya → task terhapus
@@ -595,7 +598,25 @@ Create · Complete (toggle) · Edit · Delete (dengan konfirmasi) · Priority (L
    dipilih + UI setting expiry di TaskForm (3 opsi) + warning destruktif.
 3. Jangan pakai `fallbackToDestructiveMigration` tanpa izin eksplisit Master.
 
-> Bagian ini mencatat USULAN. Belum ada perubahan kode sampai Master memilih.
+> Bagian ini mencatat USULAN. **Selesai diimplementasi** — lihat commit `98e6bf5`.
+> Implementasi: `Task.expiresAt` + DB migration v4→v5 (kolom nullable) +
+> `TaskDao.deleteExpiredTasks()` (WHERE expiresAt < now AND completed = 0) +
+> `ExpiredTaskWorker` (WorkManager, periodic 1 jam, di-schedule di `MainActivity`) +
+> UI expiry selector di `TaskFormScreen` (No / 1 hari / 7 hari / 30 hari) dengan
+> label warning "permanen, tanpa undo". Completed task exempt (tidak ikut terhapus).
+
+---
+
+## Fitur yang Sudah Diimplementasi (Update 2026-10-13)
+
+**Tier 1** (commit `72ee147`, `f3687e2`): Filter Chips · Due Date · Tags · Search
+**Tier 2** (commit `fd316c4`): Undo Delete · Sort (Newest/Oldest/Priority/Due Date)
+**Tier 3** (commit `9c09066`, `4ded311`): Momentum Card · Theme Toggle · Subtasks
+**Catatan Ide** (commit `98e6bf5`): Bottom Navigation (4 tab) · Auto-Delete/Expiry
+
+- Total unit test: **38/38 lulus**
+- DB version: **5** (migration v1→v2→v3→v4→v5, semua terdaftar, data user aman)
+- Dependencies baru: DataStore (theme prefs), WorkManager (expiry cleanup)
 
 ---
 
